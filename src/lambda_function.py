@@ -23,7 +23,7 @@ s3_client = boto3.client('s3')
 
 #fixed Properties
 client_name_fixed = ""
-project_name_fixed=""
+project_name_fixed= ""
 bucket_name = 'mdb.demo'
 
 output_folder = 'OutputImages/'
