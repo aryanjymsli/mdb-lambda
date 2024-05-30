@@ -9,7 +9,7 @@ RUN apt install -y libgl1-mesa-glx
 RUN chmod 1777 /tmp
 
 #python 3.11 lambda base image
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/python:3.8
 
 RUN pip3 install opencv-python-headless
 
