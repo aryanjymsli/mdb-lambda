@@ -15,7 +15,7 @@ def set_input_folder_from_name(image_name):
     input_folder =arry[3]
     output_folder=arry[4]
     uuid =arry[5]
-    file_type =arry[6]
+    file_type =arry[]
     prefix = 'Model_files'
     model_key = f'{prefix}/{model_file_name}'
 
