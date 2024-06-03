@@ -14,6 +14,7 @@ from stardist.models import Config2D, StarDist2D
 import random 
 import cv2
 import os
+import re
 
 os.chdir("/tmp/")
 
@@ -21,21 +22,62 @@ os.chdir("/tmp/")
 
 s3_client = boto3.client('s3')
     
-#fixed Properties
-client_name_fixed = ""
-project_name_fixed = ""
+# fixed Properties 
+client_name_fixed = "YMC"
+project_name_fixed = "FMS"
 bucket_name = 'mdb.demo'
 
-output_folder = 'OutputImages/'
-model_file_name = 'mymodel_Dec13_keras_new_dataset.keras'
-prefix = 'Model_files'
-model_key = f'{prefix}/{model_file_name}'
-input_folder = "ValidationImages/"
+# output_folder = 'OutputImages/'
+# model_file_name = 'mymodel_Dec13_keras_new_dataset.keras'
+# prefix = ""
+# model_key = f'{prefix}/{model_file_name}'
+# input_folder = "ValidationImages/"
 
+prefix = ""
+client_name = ""
+project_name =""
+model_file_name=""
+model_folder_name=""
+input_folder=""
+output_folder=""
+model_key=""
 
 # Define the local path where the model file will be downloaded
 local_model_path = '/tmp/' + model_file_name
 
+#this function set the vaiables which decide input and output folders and model  
+def set_input_folder_from_name(image_name):
+    arry= split_string_and_append_to_array(image_name)
+    client_name=arry[0]
+    project_name =arry[1]
+    model_file_name =arry[2]
+    model_folder_name = arry[3]
+    input_folder =arry[4]
+    output_folder=arry[5]
+    uuid =arry[6]
+    file_type =arry[7]
+    prefix = model_folder_name
+    model_key = f'{prefix}/{model_file_name}'
+    local_model_path = '/tmp/' + model_file_name
+
+    print(arry,client_name,project_name,model_folder_name,model_file_name,input_folder,output_folder,file_type,prefix,model_key)
+    
+#this function uses regex to create variables 
+def split_string_and_append_to_array(input_string):
+    # Define the regex pattern to split by periods
+    pattern = r'\-'
+    
+    # Use re.split to split the input string by the pattern
+    split_strings = re.split(pattern, input_string)
+    
+    # Initialize an empty array
+    result_array = []
+    
+    # Append each substring to the array
+    for substring in split_strings:
+        result_array.append(substring)
+    
+    return result_array
 
 def download_model_from_s3(bucket_name, key, local_path):
     try:
@@ -48,13 +90,10 @@ def download_model_from_s3(bucket_name, key, local_path):
         print(f"Error downloading model file from S3: {e}")
         return False
                     
-
-
 def encode_image(image):
     _, encoded_image = cv2.imencode('.jpg', image)
     return encoded_image.tobytes()
     
-
 def upload_image_to_s3(image_data, bucket, outputkey):
     try:
         s3_client.put_object(Body=image_data, Bucket=bucket, Key=outputkey)
@@ -63,8 +102,6 @@ def upload_image_to_s3(image_data, bucket, outputkey):
     except Exception as e:
         print(f"Error uploading image to S3: {e}")
         return False
-
-
 
 def lambda_handler(event, context):
     # Check if the event is an S3 event
@@ -75,102 +112,108 @@ def lambda_handler(event, context):
         print("this is key",key)
         image_name = key.split("/")[-1]
         print("this is image_name",image_name)
-        
+
+        # setting imp s3 variables
+        set_input_folder_from_name(image_name)
+
+        if (client_name == client_name_fixed and project_name == project_name_fixed):
         # Check if the uploaded object is in the validationimages folder
-        if key.startswith(input_folder):
-            # Process the uploaded image here
-            print("line no 67")
-            np.random.seed(42)
-            image_path = '/tmp/'+image_name
-            s3_client.download_file(bucket_name, key, image_path)
-            # lbl_cmap = random_label_cmap()
-            
-            def imreadReshape(key):
-                if ".tif" in image_name:
-                    imageRead = imread(image_path)
-                    if np.ndim(imageRead) == 2:
-                        return imageRead
-                    imageRead = np.array(imageRead)
-                    imageRead = cv2.resize(imageRead,(768,768))
-                    return imageRead[:,:,0]
-                else:
-                    print("line no 80")
-                    imageRead = cv2.imread(image_path)
-                    print("line no 82")
-                    if np.ndim(imageRead) == 2:
-                        return imageRead
-                    print("line no 85")
-                    print("Image shape before resizing:", imageRead.shape)  # Add this line for debugging
-                    #imageRead = np.array(imageRead)
-                    imageRead = cv2.resize(imageRead,(768,768))
-                    print("line no 88")
-                    return imageRead[:,:,0]
-            
-            print("I am readreshape function complete")
-            X_val = [image_name]
-            X_val = list(map(imreadReshape,X_val))
-            n_channel = 1 if X_val[0].ndim == 2 else X_val[0].shape[-1]  #If no third dim. then number of channels = 1. Otherwise get the num channels from the last dim.
-            axis_norm = (0,1)  
-            if n_channel > 1:
-                print("Normalizing image channels %s." % ('jointly' if axis_norm is None or 2 in axis_norm else 'independently'))
-                sys.stdout.flush()
-            
-            X_val = [x/255 for x in X_val]
-            rng = np.random.RandomState(42)
-            
-            print(Config2D.__doc__)
-            gputools_available()
-            
-            n_rays = 32 #ok
-            use_gpu = True and gputools_available() #ok
-            
-            grid = (2,2) # ok
-            
-            conf = Config2D (
-                n_rays       = n_rays,
-                grid         = grid,
-                use_gpu      = use_gpu,
-                n_channel_in = n_channel,
-                train_patch_size = (768,768)
-            )
-            print("this is prefix below")
-            # prefix_exists(bucket_name, prefix)
-            if download_model_from_s3(bucket_name, model_key, local_model_path):
-            ## Load the model
-                new_model = tf.keras.models.load_model(local_model_path,compile=False)
-            print("Load Model Complete")
-            # Serialize the 'conf' object and write it to a file in the /tmp directory
-            import pickle
-            with open('/tmp/conf.pkl', 'wb') as f:
-                pickle.dump(conf, f)
-
-            # Load the serialized configuration from the file
-            with open('/tmp/conf.pkl', 'rb') as f:
-                loaded_conf = pickle.load(f)
-
-            # Now you can use 'loaded_conf' as your configuration object
-            model_loaded = StarDist2D(loaded_conf)
-            ## new_model = tf.keras.models.load_model(r'C:\Users\ve00ym767\Downloads\mymodel_Dec13_keras_new_dataset.keras')
-            model_loaded.keras_model = new_model
-            model_loaded.thresholds = {"nms":0.3,"prob":0.5590740124765305}
-            prediction_second_list = [model_loaded.predict_instances(x, n_tiles=model_loaded._guess_n_tiles(x), show_tile_progress=False)[0]
-                          for x in X_val]
-            print("this is prediction_second_list",prediction_second_list)
-            for idx, image in enumerate(prediction_second_list):
-                # Encode the image to bytes
-                encoded_image = encode_image(image)
-    
-                # Construct the key for the S3 object
-                outputkey = f"{output_folder}processed_image_{image_name}"
+            if key.startswith(f'{input_folder}/'):
+                # Process the uploaded image here
+                print("line no 67")
+                np.random.seed(42)
+                image_path = '/tmp/'+image_name
+                s3_client.download_file(bucket_name, key, image_path)
+                # lbl_cmap = random_label_cmap()
                 
-                # Upload the encoded image to S3
-                if upload_image_to_s3(encoded_image, bucket_name, outputkey):
-                    print(f"Processed image {image_name} uploaded successfully")
-                else:
-                    print(f"Failed to upload processed image {image_name}")
-            # os.makedirs("ResultInferenceawstesting",exist_ok=True)
-            
+                def imreadReshape(key):
+                    if ".tif" in image_name:
+                        imageRead = imread(image_path)
+                        if np.ndim(imageRead) == 2:
+                            return imageRead
+                        imageRead = np.array(imageRead)
+                        imageRead = cv2.resize(imageRead,(768,768))
+                        return imageRead[:,:,0]
+                    else:
+                        print("line no 80")
+                        imageRead = cv2.imread(image_path)
+                        print("line no 82")
+                        if np.ndim(imageRead) == 2:
+                            return imageRead
+                        print("line no 85")
+                        print("Image shape before resizing:", imageRead.shape)  # Add this line for debugging
+                        #imageRead = np.array(imageRead)
+                        imageRead = cv2.resize(imageRead,(768,768))
+                        print("line no 88")
+                        return imageRead[:,:,0]
+                
+                print("I am readreshape function complete")
+                X_val = [image_name]
+                X_val = list(map(imreadReshape,X_val))
+                n_channel = 1 if X_val[0].ndim == 2 else X_val[0].shape[-1]  #If no third dim. then number of channels = 1. Otherwise get the num channels from the last dim.
+                axis_norm = (0,1)  
+                if n_channel > 1:
+                    print("Normalizing image channels %s." % ('jointly' if axis_norm is None or 2 in axis_norm else 'independently'))
+                    sys.stdout.flush()
+                
+                X_val = [x/255 for x in X_val]
+                rng = np.random.RandomState(42)
+                
+                print(Config2D.__doc__)
+                gputools_available()
+                
+                n_rays = 32 #ok
+                use_gpu = True and gputools_available() #ok
+                
+                grid = (2,2) # ok
+                
+                conf = Config2D (
+                    n_rays       = n_rays,
+                    grid         = grid,
+                    use_gpu      = use_gpu,
+                    n_channel_in = n_channel,
+                    train_patch_size = (768,768)
+                )
+                print("this is prefix below")
+                # prefix_exists(bucket_name, prefix)
+                if download_model_from_s3(bucket_name, model_key, local_model_path):
+                ## Load the model
+                    new_model = tf.keras.models.load_model(local_model_path,compile=False)
+                print("Load Model Complete")
+                # Serialize the 'conf' object and write it to a file in the /tmp directory
+                import pickle
+                with open('/tmp/conf.pkl', 'wb') as f:
+                    pickle.dump(conf, f)
+
+                # Load the serialized configuration from the file
+                with open('/tmp/conf.pkl', 'rb') as f:
+                    loaded_conf = pickle.load(f)
+
+                # Now you can use 'loaded_conf' as your configuration object
+                model_loaded = StarDist2D(loaded_conf)
+                ## new_model = tf.keras.models.load_model(r'C:\Users\ve00ym767\Downloads\mymodel_Dec13_keras_new_dataset.keras')
+                model_loaded.keras_model = new_model
+                model_loaded.thresholds = {"nms":0.3,"prob":0.5590740124765305}
+                prediction_second_list = [model_loaded.predict_instances(x, n_tiles=model_loaded._guess_n_tiles(x), show_tile_progress=False)[0]
+                            for x in X_val]
+                print("this is prediction_second_list",prediction_second_list)
+                for idx, image in enumerate(prediction_second_list):
+                    # Encode the image to bytes
+                    encoded_image = encode_image(image)
+        
+                    # Construct the key for the S3 object
+                    outputkey = f"{client_name}/{project_name}/{model_folder_name}/{output_folder}/processed_image_{image_name}"
+                    
+                    # Upload the encoded image to S3
+                    if upload_image_to_s3(encoded_image, bucket_name, outputkey):
+                        print(f"Processed image {image_name} uploaded successfully")
+                    else:
+                        print(f"Failed to upload processed image {image_name}")
+                # os.makedirs("ResultInferenceawstesting",exist_ok=True)
+                
+            else:
+                print(f"Image uploaded to a different folder: {outputkey}")
         else:
-            print(f"Image uploaded to a different folder: {outputkey}")
+            print("Unsupported event format or not an S3 event")
     else:
-        print("Unsupported event format or not an S3 event")
+        print("wrong client or Project please upload in these", client_name_fixed, project_name_fixed)
