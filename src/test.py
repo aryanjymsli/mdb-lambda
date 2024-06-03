@@ -14,7 +14,8 @@ def set_input_folder_from_name(image_name):
     model_file_name =arry[2]
     input_folder =arry[3]
     output_folder=arry[4]
-    file_type =arry[5]
+    uuid =arry[5]
+    file_type =arry[6]
     prefix = 'Model_files'
     model_key = f'{prefix}/{model_file_name}'
 
@@ -36,5 +37,5 @@ def split_string_and_append_to_array(input_string):
     
     return result_array
 
-test_image_name = "client_name.project_name.model_name.input_folder.output_folder.fileType"
+test_image_name = "client_name.project_name.model_name.input_folder.output_folder.uuid.fileType"
 set_input_folder_from_name(test_image_name)
