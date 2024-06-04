@@ -48,19 +48,44 @@ local_model_path = '/tmp/' + model_file_name
 
 #this function set the vaiables which decide input and output folders and model  
 def set_input_folder_from_name(image_name):
-    arry= split_string_and_append_to_array(image_name)
+    arry = split_string_and_append_to_array(image_name)
+
+    global client_name
     client_name=arry[0]
+
+    global project_name
     project_name =arry[1]
+
+    global model_folder_name
     model_folder_name =arry[2]
+
+    global model_file_name
     model_file_name = arry[3]
+
+    global input_folder
     input_folder =arry[4]
+
+    global output_folder
     output_folder=arry[5]
+
+    global uuid
     uuid =arry[6]
+    
+    global file_type
     file_type =arry[7]
+
+    global prefix
     prefix = model_folder_name
+
+    global model_key
     model_key = f'{prefix}/{model_file_name}'
+
+    global local_model_path
     local_model_path = '/tmp/' + model_file_name
+
+    global process_folder
     process_folder = f"{client_name}/{project_name}/{model_folder_name}/{input_folder}/"
+    
     print(arry,client_name,project_name,model_folder_name,model_file_name,input_folder,output_folder,file_type,prefix,model_key)
     print(process_folder,"process_folder")
     
