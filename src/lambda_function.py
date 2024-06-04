@@ -51,8 +51,8 @@ def set_input_folder_from_name(image_name):
     arry= split_string_and_append_to_array(image_name)
     client_name=arry[0]
     project_name =arry[1]
-    model_file_name =arry[2]
-    model_folder_name = arry[3]
+    model_folder_name =arry[2]
+    model_file_name = arry[3]
     input_folder =arry[4]
     output_folder=arry[5]
     uuid =arry[6]
