@@ -21,8 +21,8 @@ os.chdir("/tmp/")
 s3_client = boto3.client('s3')
     
 # fixed Properties 
-client_name_fixed = "YMC"
-project_name_fixed = "FMS"
+client_name_fixed = "YMSLI"
+project_name_fixed = "MDB"
 bucket_name = 'mdb.demo'
 
 # output_folder = 'OutputImages/'
