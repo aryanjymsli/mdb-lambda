@@ -41,6 +41,7 @@ model_folder_name=""
 input_folder=""
 output_folder=""
 model_key=""
+process_folder=""
 
 # Define the local path where the model file will be downloaded
 local_model_path = '/tmp/' + model_file_name
@@ -59,8 +60,9 @@ def set_input_folder_from_name(image_name):
     prefix = model_folder_name
     model_key = f'{prefix}/{model_file_name}'
     local_model_path = '/tmp/' + model_file_name
-
+    process_folder = f"{client_name}/{project_name}/{project_name}/{model_folder_name}/{input_folder}/"
     print(arry,client_name,project_name,model_folder_name,model_file_name,input_folder,output_folder,file_type,prefix,model_key)
+    print(process_folder,"process_folder")
     
 #this function uses regex to create variables 
 def split_string_and_append_to_array(input_string):
@@ -104,6 +106,7 @@ def upload_image_to_s3(image_data, bucket, outputkey):
         return False
 
 def lambda_handler(event, context):
+    print("version-2")
     # Check if the event is an S3 event
     print("this is event",event)
     if 'Records' in event and len(event['Records']) > 0 and 's3' in event['Records'][0]:
@@ -114,11 +117,11 @@ def lambda_handler(event, context):
         print("this is image_name",image_name)
 
         # setting imp s3 variables
-        set_input_folder_from_name(image_name)
+        x = set_input_folder_from_name(image_name)
 
         if (client_name == client_name_fixed and project_name == project_name_fixed):
         # Check if the uploaded object is in the validationimages folder
-            if key.startswith(f'{input_folder}/'):
+            if key.startswith(f'{process_folder}'):
                 # Process the uploaded image here
                 print("line no 67")
                 np.random.seed(42)
