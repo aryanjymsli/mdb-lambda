@@ -217,6 +217,6 @@ def lambda_handler(event, context):
             else:
                 print(f"Image uploaded to a different folder: {outputkey}")
         else:
-            print("Unsupported event format or not an S3 event")
+            print("wrong client or Project please upload in these",client_name,client_name_fixed, project_name,project_name_fixed)
     else:
-        print("wrong client or Project please upload in these", client_name_fixed, project_name_fixed)
+        print("Unsupported event format or not an S3 event")
