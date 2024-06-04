@@ -18,8 +18,6 @@ import re
 
 os.chdir("/tmp/")
 
-
-
 s3_client = boto3.client('s3')
     
 # fixed Properties 
@@ -44,7 +42,7 @@ model_key=""
 process_folder=""
 
 # Define the local path where the model file will be downloaded
-local_model_path = '/tmp/'
+local_model_path = '/tmp/' + model_file_name
 
 #this function set the vaiables which decide input and output folders and model  
 def set_input_folder_from_name(image_name):
@@ -82,6 +80,9 @@ def set_input_folder_from_name(image_name):
 
     global process_folder
     process_folder = f"{client_name}/{project_name}/{model_folder_name}/{input_folder}/"
+
+    global local_model_path 
+    local_model_path = '/tmp/' + model_file_name
     
     print(arry,client_name,project_name,model_folder_name,model_file_name,input_folder,output_folder,file_type,prefix,model_key)
     print(process_folder,"process_folder")
