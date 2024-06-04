@@ -44,7 +44,7 @@ model_key=""
 process_folder=""
 
 # Define the local path where the model file will be downloaded
-local_model_path = '/tmp/' + model_file_name
+local_model_path = '/tmp/'+'mymodel_Dec13_keras_new_dataset.keras'
 
 #this function set the vaiables which decide input and output folders and model  
 def set_input_folder_from_name(image_name):
