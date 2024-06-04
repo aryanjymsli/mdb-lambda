@@ -78,10 +78,7 @@ def set_input_folder_from_name(image_name):
     prefix = model_folder_name
 
     global model_key
-    model_key = f'{prefix}/{model_file_name}'
-
-    global local_model_path
-    local_model_path = '/tmp/' + model_file_name
+    model_key = f'{client_name}/{project_name}/{model_folder_name}/{model_file_name}'
 
     global process_folder
     process_folder = f"{client_name}/{project_name}/{model_folder_name}/{input_folder}/"
